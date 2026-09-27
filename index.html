@@ -62,7 +62,7 @@
   .opt[hidden] { display: none; }                                  /* e.g. the parked Course switch */
   /* welcome / how-to panel over the video (never part of an export: it sits outside #stage and html.export hides it) */
   #intro { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: clamp(10px, 3%, 32px); overflow-y: auto;
-    background: var(--ui-bg); }                                     /* plain, solid dark (user: easier to read) */
+    background: radial-gradient(120% 120% at 30% 20%, rgba(40, 12, 110, .8), rgba(10, 6, 24, .88)); backdrop-filter: blur(5px); }   /* see-through, blurred: the paused frame shows behind (user) */
   #intro[hidden] { display: none; }
   #intro .intro-card { max-width: 660px; color: var(--ui-text); font-size: clamp(12px, 1.35vw, 15px); line-height: 1.5; }
   #intro h2 { margin: 0 0 4px; font-size: clamp(16px, 2vw, 22px); }
