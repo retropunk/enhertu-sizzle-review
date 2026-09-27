@@ -60,6 +60,20 @@
   .flowopt input { width: 150px; accent-color: var(--ui-accent); }
   .speedopt input { width: 180px; accent-color: var(--ui-accent); }
   .opt[hidden] { display: none; }                                  /* e.g. the parked Course switch */
+  /* welcome / how-to panel over the video (never part of an export: it sits outside #stage and html.export hides it) */
+  #intro { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: clamp(10px, 3%, 32px); overflow-y: auto;
+    background: var(--ui-bg); }                                     /* plain, solid dark (user: easier to read) */
+  #intro[hidden] { display: none; }
+  #intro .intro-card { max-width: 660px; color: var(--ui-text); font-size: clamp(12px, 1.35vw, 15px); line-height: 1.5; }
+  #intro h2 { margin: 0 0 4px; font-size: clamp(16px, 2vw, 22px); }
+  #intro .lead { margin: 0 0 12px; color: var(--ui-dim); }
+  #intro ul { margin: 0 0 12px; padding: 0; list-style: none; display: grid; gap: 7px; }
+  #intro li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; }
+  #intro li i { font-style: normal; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--ui-accent); color: #1a0b00; font-weight: 700; font-size: 12px; margin-top: 1px; }
+  #intro b { color: #fff; }
+  #intro .send { border: 1px solid var(--ui-line); background: rgba(255,255,255,.05); border-radius: 10px; padding: 10px 12px; margin: 0 0 14px; }
+  #intro .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  #intro .small { color: var(--ui-dim); font-size: .9em; }
   .speedopt output { min-width: 44px; font: 600 12px 'Open Sans', sans-serif; color: var(--ui-text); cursor: pointer; }
   .flowopt output { min-width: 78px; font: 600 12px 'Open Sans', sans-serif; color: var(--ui-text); }
   /* ---------- export panel ---------- */
@@ -189,7 +203,7 @@
   /* export: the page is just the stage at 1920×1080, for the renderer (?export=1) */
   html.export, html.export body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
   html.export .wrap { padding: 0; max-width: none; margin: 0; }
-  html.export header, html.export .controls, html.export .frames, html.export .note, html.export .board, html.export #exportDlg { display: none !important; }
+  html.export header, html.export .controls, html.export .frames, html.export .note, html.export .board, html.export #exportDlg, html.export #intro { display: none !important; }
   html.export .viewport { width: 1920px; height: 1080px; aspect-ratio: auto; border-radius: 0; background: transparent; }
   /* layer switches (player "Layers" control, or ?text=0&shapes=0&images=0&sphere=0 in the address) */
   .hide-text .line { visibility: hidden !important; }
@@ -203,7 +217,7 @@
 <div class="wrap">
   <header>
     <h1>ENHERTU Sizzle · Test Animation · Frames 1–31</h1>
-    <p>HTML + SVG + GSAP · 1920×1080 · scrubbable timeline</p>
+    <p>HTML + SVG + GSAP · 1920×1080 · scrubbable timeline <button class="btn" id="helpBtn" style="height:30px;margin-left:10px">How to use</button></p>
   </header>
 
   <div class="viewport" id="viewport">
@@ -1299,6 +1313,19 @@
       <div id="fade"></div>
     </div>
     <div class="board" id="board"><span id="board-label">BOARD 1</span><img id="board-img" src="assets/board/f1.jpg" alt=""></div>
+    <div id="intro" role="dialog" aria-labelledby="introTitle"><div class="intro-card">
+      <h2 id="introTitle">Make this video your own</h2>
+      <p class="lead">Use the controls under the video to set up the version you want. Nothing on this screen is part of the video.</p>
+      <ul>
+        <li><i>1</i><span><b>Speed</b>: slow it down to 0.25× or speed it up to 5×. The exported video plays at the speed you choose, so it gets longer or shorter.</span></li>
+        <li><i>2</i><span><b>Gradient flow</b>: how much the colours move, from Off through Subtle, Medium and Bold up to Wild, Extreme and Max.</span></li>
+        <li><i>3</i><span><b>Layers</b>: turn the <b>Text</b>, <b>Copy shapes</b>, <b>Images</b> and <b>Sphere</b> on or off.</span></li>
+        <li><i>4</i><span><b>Board overlay</b>: shows the storyboard frame in the corner so you can compare. It is never included in the exported video.</span></li>
+      </ul>
+      <div class="send review-only"><b>When it looks right:</b> click <b>Export settings…</b>, choose the frames, resolution and frame rate, add <b>your name</b> and a note, then click <b>Download settings</b>. Send that file to <b>Joe and Patrick</b>; they'll export the final MP4 for the edit.</div>
+      <div class="send local-only"><b>When it looks right:</b> click <b>Export video…</b> to make the MP4 on this computer. To render a settings file someone sent you, use <b>Load settings…</b> in the same panel.</div>
+      <div class="row"><button class="btn primary" id="introPlay">▶ Play</button><button class="btn" id="introClose">Look around first</button><span class="small">Reopen this any time with <b>How to use</b>.</span></div>
+    </div></div>
   </div>
 
   <div class="controls">
@@ -1744,6 +1771,9 @@ const cssFlowEls = $$('.hold, .card');
 let tl;
 /* ---------- the player clock: display time in the current mode → master time on tl ---------- */
 const P = { td: 0, playing: false, speed: 1, mode: '3d', last: 0 };
+// the how-to panel over the video: shown on arrival, gone once they play or move the timeline; "How to use" reopens it
+function hideIntro() { const el = document.getElementById('intro'); if (el) el.hidden = true; }
+function showIntro() { P.pause && P.pause(); const el = document.getElementById('intro'); if (el) { el.hidden = false; document.getElementById('introPlay').focus(); } }
 const curT = () => MODE_T[P.mode], curDur = () => curT().dur;
 function toMaster(td, mode = P.mode) {
   const { starts, dur } = MODE_T[mode], M = FRAMES.map(f => f.m);
@@ -1758,7 +1788,7 @@ function fromMaster(m, mode = P.mode) {
   return d0 + (Math.min(m, m1) - m0) * (d1 - d0) / Math.max(1e-6, m1 - m0);
 }
 P.seek = td => { P.td = Math.max(0, Math.min(curDur(), td)); if (tl) { tl.seek(toMaster(P.td), false); render(); } };
-P.play = () => { if (P.td >= curDur() - 1e-3) P.td = 0; P.playing = true; P.last = performance.now(); setPlaying(true); requestAnimationFrame(P.tick); };
+P.play = () => { hideIntro(); if (P.td >= curDur() - 1e-3) P.td = 0; P.playing = true; P.last = performance.now(); setPlaying(true); requestAnimationFrame(P.tick); };
 P.pause = () => { P.playing = false; setPlaying(false); };
 P.tick = now => {
   if (!P.playing) return;
@@ -2636,7 +2666,7 @@ const playBtn = $('#play'), scrub = $('#scrub'), timeEl = $('#time');
 let scrubbing = false, activeFrame = -1;
 function setPlaying(on) { playBtn.textContent = on ? '❚❚ Pause' : '▶ Play'; }
 playBtn.onclick = () => { if (P.playing) P.pause(); else P.play(); };
-scrub.oninput = () => { scrubbing = true; P.pause(); P.seek(scrub.value * curDur()); };
+scrub.oninput = () => { hideIntro(); scrubbing = true; P.pause(); P.seek(scrub.value * curDur()); };
 scrub.onchange = () => { scrubbing = false; };
 // speed slider: 12 evenly spaced notches, 4× slower to 5× faster (quarter steps near 1×, bigger jumps above 2×)
 const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
@@ -2677,13 +2707,17 @@ $$('#layers input').forEach(cb => { cb.onchange = () => { stage.classList.toggle
 }
 addEventListener('course3d-ready', () => { if (tl) render(); });
 $('#showBoard').onchange = e => $('#board').classList.toggle('on', e.target.checked);
+$('#introPlay').onclick = () => P.play();
+$('#introClose').onclick = hideIntro;
+$('#helpBtn').onclick = showIntro;
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#intro').hidden && !$('#exportDlg').open) hideIntro(); });
 
 const framesEl = $('#frames'), ticks = $('#ticks');
 FRAMES.forEach((f, i) => {
   const b = document.createElement('button');
   b.className = 'chip';
   b.innerHTML = `<img src="assets/board/f${f.n || i + 1}.jpg" alt=""><b></b>`;
-  b.onclick = () => { P.seek(f.t + 0.001); };
+  b.onclick = () => { hideIntro(); P.seek(f.t + 0.001); };
   framesEl.appendChild(b);
   ticks.appendChild(document.createElement('i'));
 });
