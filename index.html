@@ -59,6 +59,7 @@
   select.btn { padding: 0 8px; }
   .flowopt input { width: 150px; accent-color: var(--ui-accent); }
   .speedopt input { width: 180px; accent-color: var(--ui-accent); }
+  .opt[hidden] { display: none; }                                  /* e.g. the parked Course switch */
   .speedopt output { min-width: 44px; font: 600 12px 'Open Sans', sans-serif; color: var(--ui-text); cursor: pointer; }
   .flowopt output { min-width: 78px; font: 600 12px 'Open Sans', sans-serif; color: var(--ui-text); }
   /* ---------- export panel ---------- */
@@ -1309,7 +1310,7 @@
     <label class="opt"><input type="checkbox" id="loop" checked> Loop</label>
     <label class="opt flowopt">Gradient flow <input type="range" id="flow" min="0" max="5" step="0.05" value="1" list="flowStops" aria-label="Gradient flow"><output id="flowName">Medium</output></label>
     <datalist id="flowStops"><option value="0"></option><option value="0.5"></option><option value="1"></option><option value="1.6"></option><option value="2.5"></option><option value="3.5"></option><option value="5"></option></datalist>
-    <label class="opt">Course <select class="btn" id="mode" aria-label="Render the whole piece in 3D or 2D"><option value="3d" selected>3D (Three.js)</option><option value="2d">2D (SVG)</option></select></label>
+    <label class="opt" id="courseOpt" hidden>Course <select class="btn" id="mode" aria-label="Render the whole piece in 3D or 2D"><option value="3d" selected>3D (Three.js)</option><option value="2d">2D (SVG)</option></select></label>
     <label class="opt"><input type="checkbox" id="showBoard"> Board overlay</label>
     <span class="opt layers" id="layers">Layers
       <label><input type="checkbox" data-layer="text" checked> Text</label>
@@ -2727,6 +2728,10 @@ addEventListener('keydown', e => {
    Review mode (hosted, e.g. GitHub Pages, or ?review=1): there is no helper, so the panel downloads the settings as a
    small JSON file instead; "Load settings…" (and `node tools/export.mjs --settings file.json`) turns one into a video.
    The build stamp (first 10 hex of SHA-256 of index.html + "\n" + course3d.js) says which version they reviewed. */
+// The 2D course is parked for now (user, 2026-09-26): the Course switch is hidden and the player stays in 3D.
+// Set COURSE_2D = true to bring the switch back (it un-hides #courseOpt). ?course=2d still works for development.
+const COURSE_2D = false;
+if (COURSE_2D) $('#courseOpt').hidden = false;
 const REVIEW = new URLSearchParams(location.search).has('review') || !['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
 document.documentElement.classList.add(REVIEW ? 'review' : 'local');
 const buildStamp = (async () => {
@@ -2814,7 +2819,7 @@ const buildStamp = (async () => {
     if (!obj || obj.kind !== 'export-settings' || !obj.settings) throw new Error('that isn\u2019t an ENHERTU Sizzle settings file');
     const s = obj.settings, set = (name, v) => { const r = dlg.querySelector(`input[name="${name}"][value="${v}"]`); if (r) r.checked = true; };
     set('exPass', s.pass); set('exRes', s.scale); set('exFps', s.fps);
-    if (s.course === '2d' || s.course === '3d') setCourse(s.course);
+    if (s.course === '3d' || (s.course === '2d' && COURSE_2D)) setCourse(s.course);   // 2D is parked (COURSE_2D): a 2D request plays in 3D
     $$('#layers input').forEach(cb => { if (s.layers && cb.dataset.layer in s.layers) { cb.checked = s.layers[cb.dataset.layer] !== false; cb.onchange(); } });
     if (s.flow != null) { setFlow(s.flow); flowIn.value = flowAmt; showFlow(); }
     if (SPEEDS.includes(+s.speed)) setSpeed(SPEEDS.indexOf(+s.speed));
